@@ -119,22 +119,22 @@ class OrderReport(object):
 
         total_title = u'%s %s' % (capfirst(_('total')), self.order.currency)
 
-        if self.order.tax:
-            if 'tax_details' in self.order.data:
-                zero = Decimal('0.00')
+        #if self.order.tax:
+        #    if 'tax_details' in self.order.data:
+        #        zero = Decimal('0.00')
 
-                self.pdf.table([(
-                    u'',
-                    u'%s %s' % (
-                        _('Incl. tax'),
-                        u'%.1f%%' % row['tax_rate'],
-                        ),
-                    row['total'].quantize(zero),
-                    row['tax_amount'].quantize(zero),
-                    u'',
-                    ) for rate, row in self.order.data['tax_details']],
-                    (2 * cm, 4 * cm, 3 * cm, 3 * cm, 4.4 * cm),
-                    self.pdf.style.table)
+        #        self.pdf.table([(
+        #            u'',
+        #            u'%s %s' % (
+        #                _('Incl. tax'),
+        #                u'%.1f%%' % row['tax_rate'],
+        #                ),
+        #            row['total'].quantize(zero),
+        #            row['tax_amount'].quantize(zero),
+        #            u'',
+        #            ) for rate, row in self.order.data['tax_details']],
+        #            (2 * cm, 4 * cm, 3 * cm, 3 * cm, 4.4 * cm),
+        #            self.pdf.style.table)
 
         self.pdf.table([
             (total_title, u'%.2f' % self.order.total),
