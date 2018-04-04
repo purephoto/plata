@@ -44,7 +44,7 @@ class OrderReport(object):
         self.pdf.spacer(3 * mm)
 
         if not title:
-            title = _('Order')
+            title = _('Invoice')
         self.pdf.h1(u'%s %s' % (title, self.order.order_id))
         self.pdf.hr()
 
