@@ -534,7 +534,7 @@ msgstr "Dodací list"
 
 #: shop/admin.py:94
 msgid "Invoice"
-msgstr "Faktura"
+msgstr "Doklad"
 
 #: shop/admin.py:100
 msgid "add. info"
