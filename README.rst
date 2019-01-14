@@ -2,7 +2,7 @@
 Plata - the lean and mean Django-based Shop
 ===========================================
 
-.. image:: https://travis-ci.org/matthiask/plata.png?branch=next
+.. image:: https://travis-ci.org/matthiask/plata.png?branch=master
    :target: https://travis-ci.org/matthiask/plata
 
 Instead of fighting against a big and all-knowing shop system, which
@@ -15,9 +15,8 @@ and Plata requires programming -- but that's what we do -- programming!
 Visit these sites for more information
 ======================================
 
-* Plata's own website: http://www.feinheit.ch/labs/plata-django-shop/
-* Documentation: http://www.feinheit.ch/media/labs/plata/
-* Plata on github: http://github.com/matthiask/plata
-* Once upon a time Plata came with an included product model. It is still
-  available in its own repository:
+* Documentation: http://plata-django-shop.readthedocs.io
+* Plata on github: https://github.com/matthiask/plata
+* Once upon a time Plata came with an included product model.
+  It is still available in its own repository:
   https://github.com/matthiask/plata-options-product

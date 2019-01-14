@@ -1,0 +1,217 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plata examples\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-08-27 10:06+0200\n"
+"PO-Revision-Date: 2017-05-09 22:51+0200\n"
+"Last-Translator: Henning Hraban Ramm <hraban@fiee.net>\n"
+"Language-Team: \n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.8.7\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: custom/models.py:18 generic/models.py:32 oneprice/models.py:21
+#: simple/models.py:17 staggered/models.py:18
+msgid "is active"
+msgstr "is active"
+
+#: custom/models.py:19 generic/models.py:53 generic/models.py:114
+#: generic/models.py:146 oneprice/models.py:22 simple/models.py:18
+#: staggered/models.py:19
+msgid "name"
+msgstr "name"
+
+#: custom/models.py:20 oneprice/models.py:23 simple/models.py:19
+#: staggered/models.py:20
+msgid "slug"
+msgstr "slug"
+
+#: custom/models.py:21 oneprice/models.py:24 simple/models.py:20
+#: staggered/models.py:21
+msgid "ordering"
+msgstr "ordering"
+
+#: custom/models.py:23 oneprice/models.py:26 simple/models.py:22
+#: staggered/models.py:23
+msgid "description"
+msgstr "description"
+
+#: custom/models.py:27 custom/models.py:40 generic/models.py:44
+#: generic/models.py:68 oneprice/models.py:30 simple/models.py:26
+#: simple/models.py:38 staggered/models.py:27 staggered/models.py:53
+msgid "product"
+msgstr "product"
+
+#: custom/models.py:28 generic/models.py:45 oneprice/models.py:31
+#: simple/models.py:27 staggered/models.py:28
+msgid "products"
+msgstr "products"
+
+#: custom/models.py:46 generic/models.py:80 simple/models.py:44
+#: staggered/models.py:60
+msgid "price"
+msgstr "price"
+
+#: custom/models.py:47 generic/models.py:81 simple/models.py:45
+#: staggered/models.py:61
+msgid "prices"
+msgstr "prices"
+
+#: custom/models.py:57
+msgid "user"
+msgstr "user"
+
+#: custom/models.py:61
+msgid "company"
+msgstr "company"
+
+#: custom/models.py:62
+msgid "first name"
+msgstr "first name"
+
+#: custom/models.py:63
+msgid "last name"
+msgstr "last name"
+
+#: custom/models.py:64
+msgid "address"
+msgstr "address"
+
+#: custom/models.py:65
+msgid "ZIP code"
+msgstr "ZIP code"
+
+#: custom/models.py:66
+msgid "city"
+msgstr "city"
+
+#: custom/models.py:67
+msgid "country"
+msgstr "country"
+
+#: custom/templates/plata/shop_checkout.html:5
+#: custom/templates/plata/shop_checkout.html:8
+msgid "Checkout"
+msgstr "Checkout"
+
+#: custom/templates/plata/shop_checkout.html:19
+#: custom/templates/plata/shop_checkout.html:51
+msgid "Submit"
+msgstr "Submit"
+
+#: custom/templates/plata/shop_checkout.html:33
+msgid "Address"
+msgstr "Address"
+
+#: custom/views.py:38
+msgid "create account"
+msgstr "create account"
+
+#: custom/views.py:57 generic/views.py:28 oneprice/views.py:28
+#: simple/views.py:28 staggered/views.py:28
+msgid "quantity"
+msgstr "quantity"
+
+#: custom/views.py:72 generic/views.py:45 oneprice/views.py:43
+#: simple/views.py:45 staggered/views.py:59
+msgid "The cart has been updated."
+msgstr "The cart has been updated."
+
+#: generic/models.py:27
+msgid "Code"
+msgstr "Code"
+
+#: generic/models.py:30
+msgid "Short unique code for this product."
+msgstr "Short unique code for this product."
+
+#: generic/models.py:36
+msgid "content type"
+msgstr "content type"
+
+#: generic/models.py:39
+msgid "object id"
+msgstr "object id"
+
+#: generic/models.py:41
+msgid "object title"
+msgstr "object title"
+
+#: generic/models.py:74
+msgid "country group"
+msgstr "country group"
+
+#: generic/models.py:75
+msgid "The price is valid for this country or group of countries."
+msgstr "The price is valid for this country or group of countries."
+
+#: generic/models.py:90 generic/models.py:123
+msgid "Title"
+msgstr "Title"
+
+#: generic/models.py:93 generic/models.py:126
+msgid "Description"
+msgstr "Description"
+
+#: generic/models.py:96
+msgid "weight"
+msgstr "weight"
+
+#: generic/models.py:97
+msgid "in kg"
+msgstr "in kg"
+
+#: generic/models.py:103
+msgid "thing"
+msgstr "thing"
+
+#: generic/models.py:104
+msgid "things"
+msgstr "things"
+
+#: generic/models.py:130
+msgid "file"
+msgstr "file"
+
+#: generic/models.py:135
+msgid "download"
+msgstr "download"
+
+#: generic/models.py:136
+msgid "downloads"
+msgstr "downloads"
+
+#: generic/templates/product/product_detail.html:5
+#: generic/templates/product/product_list.html:5
+#: generic/templates/product/product_list.html:8
+msgid "Products"
+msgstr "Products"
+
+#: generic/templates/product/product_detail.html:12
+msgid "Weight:"
+msgstr "Weight:"
+
+#: generic/templates/product/product_detail.html:13
+msgid "Download"
+msgstr "Download"
+
+#: generic/templates/product/product_detail.html:28
+msgid "Add to cart"
+msgstr "Add to cart"
+
+#: staggered/models.py:55
+msgid "From quantity"
+msgstr "From quantity"
+
+#: staggered/views.py:41
+msgid "Price could not be determined."
+msgstr "Price could not be determined."

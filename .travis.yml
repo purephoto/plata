@@ -2,14 +2,30 @@ language: python
 sudo: false
 cache: pip
 python:
-  - "2.7"
-  - "3.4"
+- "3.5"  # Django 1.8 does not officially support 3.6
+- "2.7"
 env:
-  - REQ="Django>=1.8,<1.9"
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+- REQ="Django>=2.1,<2.2"
+- REQ="Django>=1.11,<2.0"
+- REQ="Django>=1.8,<1.9"
+matrix:
+  exclude:
+    - python: "2.7"
+      env: REQ="Django>=2.1,<2.2"
 install:
-  - pip install -U setuptools wheel pip
-  - pip install -q $REQ simplejson==3.8.0 openpyxl==2.2.6 reportlab==3.2.0 pdfdocument==3.1 django-countries==3.3
-  - python setup.py -q install
+- pip install -U pip wheel
+- pip install $REQ -r requirements.txt
+- python setup.py install
 # command to run tests, e.g. python setup.py test
 script: "cd tests && ./manage.py test testapp"
+
+jobs:
+  include:
+    - stage: style
+      python: "3.6"
+      env: REQ=none
+      install: skip
+      script:
+        - pip install black flake8
+        - flake8 .
+        - black --check examples plata tests

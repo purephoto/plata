@@ -7,9 +7,19 @@ Payment support
 Plata supports the following means of payment:
 
 * :ref:`payment_cod`
+* :ref:`payment_prepay`
+* :ref:`payment_check`
 * :ref:`payment_paypal`
 * :ref:`payment_postfinance`
 * :ref:`payment_ogone`
+* :ref:`payment_datatrans`
+* :ref:`payment_billogram`
+* :ref:`payment_payson`
+* :ref:`payment_pagseguro`
+* :ref:`payment_stripe`
+
+''Beware'', most of these are not up to date and their general state of
+usefulness is unknown. Always try to understand the source code.
 
 
 .. _payment_cod:
@@ -19,6 +29,25 @@ Cash on delivery
 
 This payment module does not need any configuration. It simply creates
 an order payment with the order total as amount and confirms the order.
+
+
+.. _payment_prepay:
+
+Payment in advance
+==================
+
+Send an invoice to the customer and wait for clearance by an admin.
+This is just a copy of the check module without mentioning checques.
+
+Configuration: ``PLATA_PAYMENT_PREPAY_NOTIFICATIONS``
+
+
+.. _payment_check:
+
+Check / Bank Transfer
+=====================
+
+Configuration: ``PLATA_PAYMENT_CHECK_NOTIFICATIONS``
 
 
 .. _payment_paypal:
@@ -31,21 +60,78 @@ The Paypal payment module needs two configuration values::
     PAYPAL = {
         'LIVE': False, # Use sandbox or live payment interface?
         'BUSINESS': 'paypal@example.com',
+        'IPN_SCHEME': 'https',
+        'RETURN_SCHEME': 'https'
     }
 
 The default IPN URL is ``payment/paypal/ipn/``; the base path is defined
 by where you added  ``shop.urls``.
 
-You can also specify `'RETURN_SCHEME'` and `'IPN_SCHEME'` within the
-`PAYPAL` settings if you're using SSL; `IPN_SCHEME` defaults to `'http'`,
+You should also specify `'RETURN_SCHEME'` and `'IPN_SCHEME'` within the
+`PAYPAL` settings and use SSL; `IPN_SCHEME` defaults to `'http'`,
 and `RETURN_SCHEME` will auto-select `'http'` or `'https'` based on
 the `request.is_secure()` value of the payment initiating request.
+
+**Never** use unencrypted communication in production!
+
+
+.. _payment_stripe:
+
+Stripe Checkout
+===============
+
+Latest addition to Plata’s payment modules, not yet tested in production.
+
+Configuration values::
+
+    STRIPE = {
+        'PUBLIC_KEY': '…',
+        'SECRET_KEY': '<secret>',
+        'LOGO': '%simg/yoursiteslogo.png' % STATIC_URL,
+        'template': 'myshop/payment/stripe_form.html',
+    }
+
+Testing or live payments depend on the keys; you might use different
+setup files. Don’t keep secrets (passwords etc.) in setting files
+that get checked in into source control!
+
+If you use zero-decimal currencies like `'JPY'` or `'KRW'`, you should setup::
+
+    CURRENCIES_WITHOUT_CENTS = ('JPY', 'KRW')  # these two are default
+
+And this is `stripe_form.html`::
+
+    {% if not callback %}
+    {% trans "Thank you for your payment!" %}
+    {% include "plata/_order_overview.html" %}
+
+    <form action="{{ post_url }}" method="POST">
+    {% csrf_token %}
+    {{ form.management_form }}
+    {{ form.id }}
+      <script
+        src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+        data-label="{% trans 'Pay with Card' %}"
+        data-key="{{ public_key }}"
+        data-amount="{{ amount }}"
+        data-currency="{{ currency }}"
+        data-name="{{ name }}"
+        data-description="{{ description }}"
+        data-image="{{ logo }}"
+        data-locale="auto"
+        {% if user.email %}data-email="{{ user.email }}"{% endif %}
+        data-zip-code="true">
+      </script>
+    </form>
+    {% endif %}
+
+More information: https://stripe.com/docs/checkout
 
 
 .. _payment_postfinance:
 
-Postfinance
-===========
+Postfinance (Switzerland)
+=========================
 
 The Postfinance payment module requires the following configuration values::
 
@@ -57,10 +143,77 @@ The Postfinance payment module requires the following configuration values::
         }
 
 This module implements payments using SHA-1 hash validation with the simpler
-SHA-1 IN hashing algorithm.
+SHA-1 IN hashing algorithm. (Someone should update this to a safer method!)
 
 The default server to server notification URL is ``payment/postfinance/ipn/``;
 the base path is defined by where you added ``shop.urls``.
+
+More information:
+
+* https://www.postfinance.ch/de/unternehmen/produkte/debitorenloesungen/e-payment-zahlungsarten.html
+* https://www.postfinance.ch/de/unternehmen/produkte/debitorenloesungen/e-payment-psp.html
+
+
+.. _payment_datatrans:
+
+Datatrans (Switzerland)
+=======================
+
+The Datatrans payment module requires the following configuration values::
+
+    DATATRANS = {
+        'MERCHANT_ID': '1000000000000',
+        'LIVE': False
+        }
+
+To work with them, you must inquire about contracts.
+
+In their lowest pay scale they charge about 500 CHF for setup plus 20 CHF per
+month plus transaction fees (in 2017). That was too much for my customer, so
+I stopped updating the datatrans payment module.
+
+
+.. _payment_billogram:
+
+Billogram (Sweden)
+==================
+
+Requires ``billogram.api`` and the following configuration::
+
+    BILLOGRAM = {
+        'API_USER': '',
+        'API_AUTHKEY': '',
+        'API_BASE': '',
+        'SIGN_KEY': ''
+    }
+
+
+.. _payment_payson:
+
+Payson (Sweden)
+===============
+
+Requires ``payson_api`` and the following configuration values::
+
+    PAYSON = {
+        'USER_ID': '',
+        'USER_KEY': '',
+        'EMAIL': 'you@example.com'
+        }
+
+
+.. _payment_pagseguro:
+
+PagSeguro (Brazil)
+==================
+
+The PagSeguro payment module is looking for the following configuration values::
+
+    PAGSEGURO = {
+        'EMAIL': 'you@example.com',
+        'TOKEN': '???',
+        'LOG': 'pagseguro.log'  # file name
+        }
 
 
 .. _payment_ogone:
@@ -82,3 +235,8 @@ SHA-1 IN hashing algorithm.
 
 The default server to server notification URL is ``payment/ogone/ipn/``;
 the base path is defined by where you added ``shop.urls``.
+
+This payment provider is part of Ingenico since 2014, thus it’s questionable
+if the module still works.
+
+

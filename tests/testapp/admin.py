@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from testapp.models import Product, Price
+from testapp.models import Price, Product
 
 
 class PriceInline(admin.TabularInline):
@@ -8,7 +8,4 @@ class PriceInline(admin.TabularInline):
     extra = 0
 
 
-admin.site.register(
-    Product,
-    inlines=[PriceInline],
-)
+admin.site.register(Product, inlines=[PriceInline])

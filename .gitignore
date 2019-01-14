@@ -7,6 +7,7 @@
 ._*
 plata.db
 plata.log
+*.sqlite3
 /docs/_build
 /docs/deploy.sh
 .pydevproject
@@ -17,3 +18,9 @@ plata.log
 /tests/venv
 /tests/.coverage
 /tests/htmlcov
+build
+.settings
+examples/downloads
+.tox
+.coverage
+htmlcov

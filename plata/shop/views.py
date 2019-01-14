@@ -1,30 +1,42 @@
 from __future__ import absolute_import, unicode_literals
 
-from functools import wraps
 import logging
+from functools import wraps
 
 from django.conf.urls import include, url
 from django.contrib import auth, messages
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import get_callable, reverse
 from django.forms.models import ModelForm, inlineformset_factory
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import get_language, ugettext as _
 
+try:
+    from django.urls import reverse, get_callable
+except ImportError:
+    from django.core.urlresolvers import reverse, get_callable
+
 import plata
 from plata.shop import forms as shop_forms
+from .forms import OrderItemForm
 
-
-logger = logging.getLogger('plata.shop.views')
+logger = logging.getLogger("plata.shop.views")
 
 
 def cart_not_empty(order, shop, request, **kwargs):
     """Redirect to cart if later in checkout process and cart empty"""
     if not order or not order.items.count():
-        messages.warning(request, _('Cart is empty.'))
-        return shop.redirect('plata_shop_cart')
+        messages.warning(request, _("Cart is empty."))
+        return shop.redirect("plata_shop_cart")
+
+
+def user_is_authenticated(order, shop, request, **kwargs):
+    """ensure the user is authenticated and redirect to checkout if not"""
+    if not shop.user_is_authenticated(request.user):
+        messages.warning(request, _("You are not authenticated"))
+        return shop.redirect("plata_shop_checkout")
 
 
 def order_already_confirmed(order, shop, request, **kwargs):
@@ -34,19 +46,24 @@ def order_already_confirmed(order, shop, request, **kwargs):
     """
     if order and order.status >= order.CONFIRMED:
         if not order.balance_remaining:
-            return shop.redirect('plata_order_success')
-        messages.warning(request, _(
-            'You have already confirmed this order earlier, but it is not'
-            ' fully paid for yet.'))
+            return shop.redirect("plata_order_success")
+        messages.warning(
+            request,
+            _(
+                "You have already confirmed this order earlier, but it is not"
+                " fully paid for yet."
+            ),
+        )
         return HttpResponseRedirect(
-            shop.reverse_url('plata_shop_confirmation') + '?confirmed=1')
+            shop.reverse_url("plata_shop_confirmation") + "?confirmed=1"
+        )
 
 
 def order_cart_validates(order, shop, request, **kwargs):
     """
     Redirect to cart if stock is insufficient and display an error message
     """
-    if request.method != 'GET':
+    if request.method != "GET":
         return
 
     try:
@@ -54,14 +71,13 @@ def order_cart_validates(order, shop, request, **kwargs):
     except ValidationError as e:
         for message in e.messages:
             messages.error(request, message)
-        return HttpResponseRedirect(
-            shop.reverse_url('plata_shop_cart') + '?e=1')
+        return HttpResponseRedirect(shop.reverse_url("plata_shop_cart") + "?e=1")
 
 
 def order_cart_warnings(order, shop, request, **kwargs):
     """Show warnings in cart, but don't redirect (meant as a replacement for
     ``order_cart_validates``, but usable on the cart view itself)"""
-    if request.method != 'GET' or request.GET.get('e') or not order:
+    if request.method != "GET" or request.GET.get("e") or not order:
         return
 
     try:
@@ -95,7 +111,9 @@ def checkout_process_decorator(*checks):
                     return r
 
             return fn(request, order=order, *args, **kwargs)
+
         return wraps(fn)(_fn)
+
     return _dec
 
 
@@ -121,16 +139,22 @@ class Shop(object):
     """
 
     #: The base template used in all default checkout templates
-    base_template = 'base.html'
-    cart_template = 'plata/shop_cart.html'
-    checkout_template = 'plata/shop_checkout.html'
-    discount_template = 'plata/shop_discounts.html'
-    confirmation_template = 'plata/shop_confirmation.html'
-    success_template = 'plata/shop_order_success.html'
-    failure_template = 'plata/shop_order_payment_failure.html'
+    base_template = "base.html"
+    cart_template = "plata/shop_cart.html"
+    checkout_template = "plata/shop_checkout.html"
+    discount_template = "plata/shop_discounts.html"
+    confirmation_template = "plata/shop_confirmation.html"
+    success_template = "plata/shop_order_success.html"
+    failure_template = "plata/shop_order_payment_failure.html"
 
-    def __init__(self, contact_model, order_model, discount_model,
-                 default_currency=None, **kwargs):
+    def __init__(
+        self,
+        contact_model,
+        order_model,
+        discount_model,
+        default_currency=None,
+        **kwargs
+    ):
         self.contact_model = contact_model
         self.order_model = order_model
         try:
@@ -147,8 +171,10 @@ class Shop(object):
 
         for key, value in kwargs.items():
             if not hasattr(self, key):
-                raise TypeError('%s() received an invalid keyword %r' % (
-                    self.__class__.__name__, key))
+                raise TypeError(
+                    "%s() received an invalid keyword %r"
+                    % (self.__class__.__name__, key)
+                )
             setattr(self, key, value)
 
     @property
@@ -160,41 +186,61 @@ class Shop(object):
         return self.get_shop_urls() + self.get_payment_urls()
 
     def get_cart_url(self):
-        return url(r'^cart/$', checkout_process_decorator(
-            order_already_confirmed
-        )(self.cart), name='plata_shop_cart')
+        return url(
+            r"^cart/$",
+            checkout_process_decorator(order_already_confirmed)(self.cart),
+            name="plata_shop_cart",
+        )
 
     def get_checkout_url(self):
-        return url(r'^checkout/$', checkout_process_decorator(
-            cart_not_empty, order_already_confirmed, order_cart_validates,
-        )(self.checkout), name='plata_shop_checkout')
+        return url(
+            r"^checkout/$",
+            checkout_process_decorator(
+                cart_not_empty, order_already_confirmed, order_cart_validates
+            )(self.checkout),
+            name="plata_shop_checkout",
+        )
 
     def get_discounts_url(self):
-        return url(r'^discounts/$', checkout_process_decorator(
-            cart_not_empty, order_already_confirmed, order_cart_validates,
-        )(self.discounts), name='plata_shop_discounts')
+        return url(
+            r"^discounts/$",
+            checkout_process_decorator(
+                user_is_authenticated,
+                cart_not_empty,
+                order_already_confirmed,
+                order_cart_validates,
+            )(self.discounts),
+            name="plata_shop_discounts",
+        )
 
     def get_confirmation_url(self):
-        return url(r'^confirmation/$', checkout_process_decorator(
-            cart_not_empty, order_cart_validates,
-        )(self.confirmation), name='plata_shop_confirmation')
+        return url(
+            r"^confirmation/$",
+            checkout_process_decorator(
+                user_is_authenticated, cart_not_empty, order_cart_validates
+            )(self.confirmation),
+            name="plata_shop_confirmation",
+        )
 
     def get_success_url(self):
-        return url(
-            r'^order/success/$',
-            self.order_success,
-            name='plata_order_success'
-        )
+        return url(r"^order/success/$", self.order_success, name="plata_order_success")
 
     def get_failure_url(self):
         return url(
-            r'^order/payment_failure/$',
+            r"^order/payment_failure/$",
             self.order_payment_failure,
-            name='plata_order_payment_failure'
+            name="plata_order_payment_failure",
         )
 
     def get_new_url(self):
-        return url(r'^order/new/$', self.order_new, name='plata_order_new')
+        return url(r"^order/new/$", self.order_new, name="plata_order_new")
+
+    def get_pending_url(self):
+        return url(
+            r"^order/payment_pending/$",
+            self.order_payment_pending,
+            name="plata_order_payment_pending",
+        )
 
     def get_shop_urls(self):
         return [
@@ -205,13 +251,11 @@ class Shop(object):
             self.get_success_url(),
             self.get_failure_url(),
             self.get_new_url(),
+            self.get_pending_url(),  # ?
         ]
 
     def get_payment_urls(self):
-        return [
-            url(r'', include(module.urls))
-            for module in self.get_payment_modules()
-        ]
+        return [url(r"", include(module.urls)) for module in self.get_payment_modules()]
 
     def get_payment_modules(self, request=None):
         """
@@ -222,12 +266,24 @@ class Shop(object):
         """
         all_modules = [
             get_callable(module)(self)
-            for module in plata.settings.PLATA_PAYMENT_MODULES]
+            for module in plata.settings.PLATA_PAYMENT_MODULES
+        ]
         if not request:
             return all_modules
-        return [
-            module for module in all_modules
-            if module.enabled_for_request(request)]
+        return [module for module in all_modules if module.enabled_for_request(request)]
+
+    def user_is_authenticated(self, user):
+        """
+        Overwrite this for custom authentication check.
+        This is needed to support lazysignup
+        """
+        if user:
+            attr = user.is_authenticated
+            return attr() if callable(attr) else attr
+        return False
+
+    def user_login(self, request, user):
+        auth.login(request, user)
 
     def default_currency(self, request=None):
         """
@@ -258,9 +314,24 @@ class Shop(object):
         from the session.
         """
         if order:
-            request.session['shop_order'] = order.pk
-        elif 'shop_order' in request.session:
-            del request.session['shop_order']
+            request.session["shop_order"] = order.pk
+        elif "shop_order" in request.session:
+            del request.session["shop_order"]
+
+    def create_order_for_user(self, user, request=None):
+        """Creates and returns a new order for the given user."""
+        contact = self.contact_from_user(user)
+        # we can't check for user_is_authenticated,
+        # because in the lazy_user case, it might return false,
+        # even though the user is a persistent model
+        order_user = None if isinstance(user, AnonymousUser) else user
+
+        order = self.order_model.objects.create(
+            currency=getattr(contact, "currency", self.default_currency(request)),
+            user=getattr(contact, "user", order_user),
+            language_code=get_language(),
+        )
+        return order
 
     def order_from_request(self, request, create=False):
         """
@@ -270,8 +341,15 @@ class Shop(object):
         Returns ``None`` if unable to find an offer.
         """
         try:
-            order_pk = request.session.get('shop_order')
+            order_pk = request.session.get("shop_order")
             if order_pk is None:
+                # check if the current user has a open order
+                if self.user_is_authenticated(request.user):
+                    order = self.order_model.objects.filter(user=request.user).latest()
+                    if order is not None and order.status < self.order_model.PAID:
+                        self.set_order_on_request(request, order)
+                        return order
+
                 raise ValueError("no order in session")
             return self.order_model.objects.get(pk=order_pk)
         except AttributeError:
@@ -279,21 +357,7 @@ class Shop(object):
             return None
         except (ValueError, self.order_model.DoesNotExist):
             if create:
-                contact = self.contact_from_user(request.user)
-
-                order = self.order_model.objects.create(
-                    currency=getattr(
-                        contact,
-                        'currency',
-                        self.default_currency(request)),
-                    user=getattr(
-                        contact,
-                        'user',
-                        request.user if request.user.is_authenticated()
-                        else None),
-                    language_code=get_language(),
-                )
-
+                order = self.create_order_for_user(request.user)
                 self.set_order_on_request(request, order)
                 return order
 
@@ -304,7 +368,7 @@ class Shop(object):
         Return the contact object bound to the current user if the user is
         authenticated. Returns ``None`` if no contact exists.
         """
-        if not user.is_authenticated():
+        if not self.user_is_authenticated(user):
             return None
 
         try:
@@ -317,9 +381,7 @@ class Shop(object):
         Helper method returning a context dict. Override this if you
         need additional context variables.
         """
-        ctx = {
-            'base_template': self.base_template,
-        }
+        ctx = {"base_template": self.base_template}
         ctx.update(context)
         ctx.update(kwargs)
         return ctx
@@ -341,26 +403,23 @@ class Shop(object):
         Hook for customizing the redirect function when used as application
         content
         """
-        return HttpResponseRedirect(
-            self.reverse_url(url_name, *args, **kwargs))
+        return HttpResponseRedirect(self.reverse_url(url_name, *args, **kwargs))
 
     def cart(self, request, order):
         """Shopping cart view"""
 
         if not order or not order.items.count():
-            return self.render_cart_empty(request, {
-                'progress': 'cart',
-            })
+            return self.render_cart_empty(request, {"progress": "cart"})
 
         OrderItemFormset = inlineformset_factory(
             self.order_model,
             self.orderitem_model,
-            form=getattr(self, 'form', ModelForm),
+            form=getattr(self, "form", ModelForm),
             extra=0,
-            fields=('quantity',),
+            fields=("quantity",),
         )
 
-        if request.method == 'POST':
+        if request.method == "POST":
             formset = OrderItemFormset(request.POST, instance=order)
 
             if formset.is_valid():
@@ -371,20 +430,22 @@ class Shop(object):
                 for form in formset.forms:
                     if not form.instance.product_id:
                         form.instance.delete()
-                        messages.warning(request, _(
-                            '%(name)s has been removed from the inventory'
-                            ' and from your cart as well.') % {
-                            'name': form.instance.name,
-                        })
+                        messages.warning(
+                            request,
+                            _(
+                                "%(name)s has been removed from the inventory"
+                                " and from your cart as well."
+                            )
+                            % {"name": form.instance.name},
+                        )
                         changed = True
 
-                    elif (formset.can_delete
-                            and formset._should_delete_form(form)):
+                    elif formset.can_delete and formset._should_delete_form(form):
                         if order.is_confirmed():
-                            raise ValidationError(_(
-                                'Cannot modify order once'
-                                ' it has been confirmed.'),
-                                code='order_sealed')
+                            raise ValidationError(
+                                _("Cannot modify order once" " it has been confirmed."),
+                                code="order_sealed",
+                            )
 
                         form.instance.delete()
                         changed = True
@@ -392,39 +453,39 @@ class Shop(object):
                     elif form.has_changed():
                         order.modify_item(
                             form.instance.product,
-                            absolute=form.cleaned_data['quantity'],
+                            absolute=form.cleaned_data["quantity"],
                             recalculate=False,
                             item=form.instance,
-                            )
+                        )
                         changed = True
 
                 if changed:
                     order.recalculate_total()
-                    messages.success(request, _('The cart has been updated.'))
+                    messages.success(request, _("The cart has been updated."))
 
-                if 'checkout' in request.POST:
-                    return self.redirect('plata_shop_checkout')
-                return HttpResponseRedirect('.')
+                if "checkout" in request.POST:
+                    return self.redirect("plata_shop_checkout")
+                return HttpResponseRedirect(".")
         else:
             formset = OrderItemFormset(instance=order)
 
-        return self.render_cart(request, {
-            'order': order,
-            'orderitemformset': formset,
-            'progress': 'cart',
-        })
+        return self.render_cart(
+            request, {"order": order, "orderitemformset": formset, "progress": "cart"}
+        )
 
     def render_cart_empty(self, request, context):
         """Renders a cart-is-empty page"""
-        context.update({'empty': True})
+        context.update({"empty": True})
 
         return self.render(
-            request, self.cart_template, self.get_context(request, context))
+            request, self.cart_template, self.get_context(request, context)
+        )
 
     def render_cart(self, request, context):
         """Renders the shopping cart"""
         return self.render(
-            request, self.cart_template, self.get_context(request, context))
+            request, self.cart_template, self.get_context(request, context)
+        )
 
     def checkout_form(self, request, order):
         """Returns the address form used in the first checkout step"""
@@ -432,6 +493,7 @@ class Shop(object):
         # Only import plata.contact if necessary and if this method isn't
         # overridden
         from plata.contact.forms import CheckoutForm
+
         return CheckoutForm
 
     def get_authentication_form(self, **kwargs):
@@ -439,62 +501,63 @@ class Shop(object):
 
     def checkout(self, request, order):
         """Handles the first step of the checkout process"""
-        if not request.user.is_authenticated():
-            if request.method == 'POST' and '_login' in request.POST:
+        if not self.user_is_authenticated(request.user):
+            if request.method == "POST" and "_login" in request.POST:
                 loginform = self.get_authentication_form(
-                    data=request.POST,
-                    prefix='login')
+                    data=request.POST, prefix="login"
+                )
 
                 if loginform.is_valid():
                     user = loginform.get_user()
-                    auth.login(request, user)
+                    self.user_login(request, user)
 
                     order.user = user
                     order.save()
 
-                    return HttpResponseRedirect('.')
+                    return HttpResponseRedirect(".")
             else:
-                loginform = self.get_authentication_form(prefix='login')
+                loginform = self.get_authentication_form(prefix="login")
         else:
             loginform = None
 
         if order.status < order.CHECKOUT:
-            order.update_status(order.CHECKOUT, 'Checkout process started')
+            order.update_status(order.CHECKOUT, "Checkout process started")
 
         OrderForm = self.checkout_form(request, order)
 
         orderform_kwargs = {
-            'prefix': 'order',
-            'instance': order,
-            'request': request,
-            'shop': self,
+            "prefix": "order",
+            "instance": order,
+            "request": request,
+            "shop": self,
         }
 
-        if request.method == 'POST' and '_checkout' in request.POST:
+        if request.method == "POST" and "_checkout" in request.POST:
             orderform = OrderForm(request.POST, **orderform_kwargs)
 
             if orderform.is_valid():
                 orderform.save()
                 if self.include_discount_step(request):
-                    return self.redirect('plata_shop_discounts')
+                    return self.redirect("plata_shop_discounts")
                 else:
-                    return self.redirect('plata_shop_confirmation')
+                    return self.redirect("plata_shop_confirmation")
         else:
             orderform = OrderForm(**orderform_kwargs)
 
-        return self.render_checkout(request, {
-            'order': order,
-            'loginform': loginform,
-            'orderform': orderform,
-            'progress': 'checkout',
-        })
+        return self.render_checkout(
+            request,
+            {
+                "order": order,
+                "loginform": loginform,
+                "orderform": orderform,
+                "progress": "checkout",
+            },
+        )
 
     def render_checkout(self, request, context):
         """Renders the checkout page"""
         return self.render(
-            request,
-            self.checkout_template,
-            self.get_context(request, context)
+            request, self.checkout_template, self.get_context(request, context)
         )
 
     def include_discount_step(self, request):
@@ -507,43 +570,39 @@ class Shop(object):
     def discounts(self, request, order):
         """Handles the discount code entry page"""
         if not self.include_discount_step(request):
-            return self.redirect('plata_shop_confirmation')
+            return self.redirect("plata_shop_confirmation")
 
         DiscountForm = self.discounts_form(request, order)
 
         kwargs = {
-            'order': order,
-            'discount_model': self.discount_model,
-            'request': request,
-            'shop': self,
+            "order": order,
+            "discount_model": self.discount_model,
+            "request": request,
+            "shop": self,
         }
 
-        if request.method == 'POST':
+        if request.method == "POST":
             form = DiscountForm(request.POST, **kwargs)
 
             if form.is_valid():
                 form.save()
 
-                if 'proceed' in request.POST:
-                    return self.redirect('plata_shop_confirmation')
-                return HttpResponseRedirect('.')
+                if "proceed" in request.POST:
+                    return self.redirect("plata_shop_confirmation")
+                return HttpResponseRedirect(".")
         else:
             form = DiscountForm(**kwargs)
 
         order.recalculate_total()
 
-        return self.render_discounts(request, {
-            'order': order,
-            'form': form,
-            'progress': 'discounts',
-        })
+        return self.render_discounts(
+            request, {"order": order, "form": form, "progress": "discounts"}
+        )
 
     def render_discounts(self, request, context):
         """Renders the discount code entry page"""
         return self.render(
-            request,
-            self.discount_template,
-            self.get_context(request, context)
+            request, self.discount_template, self.get_context(request, context)
         )
 
     def confirmation_form(self, request, order):
@@ -562,13 +621,9 @@ class Shop(object):
 
         ConfirmationForm = self.confirmation_form(request, order)
 
-        kwargs = {
-            'order': order,
-            'request': request,
-            'shop': self,
-        }
+        kwargs = {"order": order, "request": request, "shop": self}
 
-        if request.method == 'POST':
+        if request.method == "POST":
             form = ConfirmationForm(request.POST, **kwargs)
 
             if form.is_valid():
@@ -576,20 +631,21 @@ class Shop(object):
         else:
             form = ConfirmationForm(**kwargs)
 
-        return self.render_confirmation(request, {
-            'order': order,
-            'form': form,
-            # Whether the order had already been confirmed.
-            'confirmed': request.GET.get('confirmed', False),
-            'progress': 'confirmation',
-        })
+        return self.render_confirmation(
+            request,
+            {
+                "order": order,
+                "form": form,
+                # Whether the order had already been confirmed.
+                "confirmed": request.GET.get("confirmed", False),
+                "progress": "confirmation",
+            },
+        )
 
     def render_confirmation(self, request, context):
         """Renders the confirmation page"""
         return self.render(
-            request,
-            self.confirmation_template,
-            self.get_context(request, context)
+            request, self.confirmation_template, self.get_context(request, context)
         )
 
     def order_success(self, request):
@@ -610,52 +666,55 @@ class Shop(object):
         return self.render(
             request,
             self.success_template,
-            self.get_context(
-                request, {
-                    'order': order,
-                    'progress': 'success',
-                }
-            )
+            self.get_context(request, {"order": order, "progress": "success"}),
         )
 
     def order_payment_failure(self, request):
         """Handles order payment failures"""
         order = self.order_from_request(request)
 
-        logger.warn('Order payment failure for %s' % order.order_id)
+        if not order:
+            messages.info(
+                request,
+                _("Payment failed and order could not be found anymore. Sorry."),
+            )
+            return self.redirect("plata_shop_cart")
+
+        logger.warn("Order payment failure for %s" % order.order_id)
 
         if plata.settings.PLATA_STOCK_TRACKING:
             StockTransaction = plata.stock_model()
 
             for transaction in order.stock_transactions.filter(
-                    type=StockTransaction.PAYMENT_PROCESS_RESERVATION):
+                type=StockTransaction.PAYMENT_PROCESS_RESERVATION
+            ):
                 transaction.delete()
 
         order.payments.pending().delete()
 
         if order.payments.authorized().exists():
             # There authorized order payments around!
-            messages.warning(request, _('Payment failed, please try again.'))
+            messages.warning(request, _("Payment failed, please try again."))
             logger.warn(
-                'Order %s is already partially paid, but payment'
-                ' failed anyway!' % order.order_id)
+                "Order %s is already partially paid, but payment"
+                " failed anyway!" % order.order_id
+            )
         elif order.status > order.CHECKOUT and order.status < order.PAID:
             order.update_status(
-                order.CHECKOUT,
-                'Order payment failure, going back to checkout')
-            messages.info(request, _(
-                'Payment failed; you can continue editing your order and'
-                ' try again.'))
+                order.CHECKOUT, "Order payment failure, going back to checkout"
+            )
+            messages.info(
+                request,
+                _(
+                    "Payment failed; you can continue editing your order and"
+                    " try again."
+                ),
+            )
 
         return self.render(
             request,
             self.failure_template,
-            self.get_context(
-                request, {
-                    'order': order,
-                    'progress': 'failure',
-                }
-            )
+            self.get_context(request, {"order": order, "progress": "failure"}),
         )
 
     def order_new(self, request):
@@ -665,8 +724,180 @@ class Shop(object):
         """
         self.set_order_on_request(request, order=None)
 
-        next = request.GET.get('next')
-        if next:
-            return HttpResponseRedirect(next)
+        rnext = request.GET.get("next")
+        if rnext:
+            return HttpResponseRedirect(rnext)
 
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect("/")
+
+    def order_payment_pending(self, request):
+        """
+        Handles order successes for invoice payments
+        where payment is still pending.
+        """
+        order = self.order_from_request(request)
+
+        if not order:
+            return self.order_new(request)
+
+        self.set_order_on_request(request, order=None)
+
+        return self.render(
+            request,
+            self.success_template,
+            self.get_context(request, {"order": order, "progress": "pending"}),
+        )
+
+
+class SinglePageCheckoutShop(Shop):
+    def get_shop_urls(self):
+        return [
+            self.get_cart_url(),
+            self.get_checkout_url(),
+            self.get_already_confirmed_url(),
+            self.get_success_url(),
+            self.get_failure_url(),
+            self.get_new_url(),
+        ]
+
+    def get_already_confirmed_url(self):
+        return url(
+            r"^confirmed/$",
+            checkout_process_decorator(cart_not_empty, order_cart_validates)(
+                self.already_confirmed
+            ),
+            name="plata_shop_confirmation",
+        )
+
+    def checkout_form(self, request, order):
+        """Returns the address form used in the first checkout step"""
+
+        # Only import plata.contact if necessary and if this method isn't
+        # overridden
+        class CheckoutForm(shop_forms.SinglePageCheckoutForm):
+            class Meta(shop_forms.SinglePageCheckoutForm.Meta):
+                model = self.order_model
+                fields = ["notes", "email", "shipping_same_as_billing"]
+                fields.extend("billing_%s" % f for f in self.order_model.ADDRESS_FIELDS)
+                fields.extend(
+                    "shipping_%s" % f for f in self.order_model.ADDRESS_FIELDS
+                )
+
+        return CheckoutForm
+
+    def cart(self, request, order):
+        """Shopping cart view"""
+
+        if not order or not order.items.count():
+            return self.render_cart_empty(request, {"progress": "cart"})
+
+        if request.method == "POST":
+            orderitemforms = [
+                OrderItemForm(request.POST, orderitem=item)
+                for item in order.items.all()
+            ]
+            changed = False
+
+            for form in orderitemforms:
+                if form.is_valid():
+                    changed = True
+                    form.save()
+            if changed:
+                return HttpResponseRedirect(".")
+        else:
+            orderitemforms = [
+                OrderItemForm(orderitem=item) for item in order.items.all()
+            ]
+
+        DiscountForm = self.discounts_form(request, order)
+
+        discounts_kwargs = {
+            "order": order,
+            "discount_model": self.discount_model,
+            "request": request,
+            "shop": self,
+            "prefix": "discount",
+        }
+
+        if request.method == "POST" and "_apply_discount" in request.POST:
+            discount_form = DiscountForm(request.POST, **discounts_kwargs)
+            if discount_form.is_valid():
+                discount_form.save()
+                return HttpResponseRedirect(".")
+        else:
+            discount_form = DiscountForm(**discounts_kwargs)
+
+        return self.render_cart(
+            request,
+            {
+                "order": order,
+                "orderitemforms": orderitemforms,
+                "discount_form": discount_form,
+                "progress": "cart",
+            },
+        )
+
+    def render_cart_empty(self, request, context):
+        """Renders a cart-is-empty page"""
+        context.update({"empty": True})
+
+        return self.render(
+            request, self.cart_template, self.get_context(request, context)
+        )
+
+    def render_cart(self, request, context):
+        """Renders the shopping cart"""
+        return self.render(
+            request, self.cart_template, self.get_context(request, context)
+        )
+
+    def checkout(self, request, order):
+        """Handles the first step of the checkout process"""
+        if order.status < order.CHECKOUT:
+            order.update_status(order.CHECKOUT, "Checkout process started")
+
+        OrderForm = self.checkout_form(request, order)
+
+        orderform_kwargs = {
+            "prefix": "order",
+            "instance": order,
+            "request": request,
+            "shop": self,
+        }
+
+        if request.method == "POST":
+            orderform = OrderForm(request.POST, **orderform_kwargs)
+
+            if orderform.is_valid():
+                return orderform.save()
+        else:
+            orderform = OrderForm(**orderform_kwargs)
+
+        return self.render_checkout(
+            request, {"order": order, "orderform": orderform, "progress": "checkout"}
+        )
+
+    def render_checkout(self, request, context):
+        """Renders the checkout page"""
+        return self.render(
+            request, self.checkout_template, self.get_context(request, context)
+        )
+
+    def already_confirmed(self, request, order):
+        form_kwargs = {"shop": self, "request": request}
+        if request.method == "POST":
+            form = shop_forms.PaymentSelectForm(request.POST, **form_kwargs)
+            if form.is_valid():
+                return form.payment_order_confirmed(
+                    order, form.cleaned_data["payment_method"]
+                )
+        else:
+            form = shop_forms.PaymentSelectForm(**form_kwargs)
+
+        context = {"form": form, "order": self.order_from_request(request)}
+
+        return self.render(
+            request,
+            "plata/shop_payment_select.html",
+            self.get_context(request, context),
+        )

@@ -10,19 +10,19 @@ Installation
 This document describes the steps needed to get Plata up and running.
 
 Plata is based on Django_, so you need a working Django_ installation
-first. Plata is developed using Django_ 1.3, and will not
-work with any earlier version.
+first. Plata is developed using Django_ 1.10, and is not tested against
+any earlier version.
 
 You can download a version of plata using ``pip``::
 
-    $ pip install -e git+https://github.com/matthiask/plata@next#egg=Plata
+    $ pip install -e git+https://github.com/fiee/plata@next#egg=Plata
 
 Please note that the package installable with ``pip`` only
 contains the files needed to run plata. It does not include documentation,
 tests or the example project which comes with the development version,
 which you can download using the Git_ version control system::
 
-    $ git clone git://github.com/matthiask/plata.git
+    $ git clone git://github.com/fiee/plata.git -b next
 
 Plata requires a version of simplejson_ >=2.1 because older versions cannot
 serialize decimal values, only floats.
@@ -82,7 +82,7 @@ follows here::
 
 
 Plata has to know the location of your shop model, because it is referenced
-f.e. in the product ``ForeignKey`` of order items. If the product model exists
+e.g. in the ``product`` ForeignKey of order items. If the product model exists
 in the ``myapp`` Django application, add the following setting::
 
     PLATA_SHOP_PRODUCT = 'myapp.Product'
@@ -104,7 +104,8 @@ Adding the modules to ``INSTALLED_APPS``
         ...
         )
 
-You should run ``./manage.py syncdb`` after you've added the required modules
+You should run ``./manage.py makemigrations plata`` and
+``./manage.py migrate plata`` after you've added the required modules
 to ``INSTALLED_APPS``.
 
 
@@ -222,16 +223,18 @@ Generic views using ``plata.shop_instance()`` could look like this::
 
 Next, you need to add the Shop's URLs to your URLconf::
 
-    from django.conf.urls import *
-    from myapp.views import shop
+    from django.conf.urls import include, url
+    from myapp.views import shop, product_list, product_detail
 
-    urlpatterns = patterns('',
+    urlpatterns = [
         url(r'^shop/', include(shop.urls)),
-        url(r'^products/$', 'myapp.views.product_list',
+        url(r'^products/$',
+            product_list,
             name='plata_product_list'),
-        url(r'^products/(?P<slug>[-\w]+)/$', 'myapp.views.product_detail',
+        url(r'^products/(?P<slug>[-\w]+)/$',
+            product_detail,
             name='plata_product_detail'),
-    )
+    ]
 
 
 The context processor

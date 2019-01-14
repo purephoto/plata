@@ -41,3 +41,46 @@ This example demonstrates how a product model might be made even simpler:
 By extending ``ProductBase`` and ``PriceBase`` at the same time, all
 product related information is kept in one Django model. This (obviously)
 means that each product can only have one price.
+
+
+``generic`` example
+===================
+
+Plata accepts only one product model. But you might want to sell widely
+differing stuff, like physical things and downloads, that need different models.
+This example shows how to setup a product model with a generic relationship
+to the real product.
+
+The data entry is somewhat complicated – first create some "Things" and
+"Downloads", then edit the "Products" for their prices.
+
+This example also uses the ``CountryGroup`` from ``plata.shipping`` to implement
+prices that depend on the customer’s country.
+
+
+setup for examples
+==================
+
+* make sure that ``examples/manage.py`` is configured to use your example
+  of choice, e.g. 'simple'.
+* setup basic Django models: ``./manage.py migrate``
+* prepare shop models (important: all at once, otherwise you’ll run into
+  a dependency hell): ``./manage.py makemigrations shop contact discount simple``
+* setup shop models: ``./manage.py migrate``
+* create an user: ``./manage.py createsuperuser``
+  (the examples contain no user management and depend on admin staff users.)
+* create tax classes, products, discounts etc. at the admin site
+
+If you want to try different examples, you must delete the migrations from
+shop, contact and discount!
+
+For your convenience, we included two (bash) shell scripts, to be called
+from within the examples directory of a git checkout.
+
+* `reset-migrations.sh` lets you delete the migrations from all examples
+  and all plata modules.
+* `startexample.sh` automates the necessary migrations setup and starts
+  one example.
+
+There are some checks and prompts to avoid damage, but of course we can’t be
+held responsible for anything that happens.
