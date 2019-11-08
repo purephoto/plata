@@ -90,6 +90,7 @@ CURRENCIES_WITHOUT_CENTS = getattr(settings, "CURRENCIES_WITHOUT_CENTS", ("JPY",
 
 #: Target of order item product foreign key (Defaults to ``'product.Product'``)
 PLATA_SHOP_PRODUCT = getattr(settings, "PLATA_SHOP_PRODUCT", "product.Product")
+PLATA_CONTACT_MODEL = getattr(settings, "PLATA_CONTACT_MODEL", "contact.models.Contact")
 
 #: Since ZIP code is far from universal, and more an L10N than I18N issue:
 PLATA_ZIP_CODE_LABEL = getattr(settings, "PLATA_ZIP_CODE_LABEL", _("ZIP code"))
