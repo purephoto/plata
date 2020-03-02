@@ -1,5 +1,5 @@
 from __future__ import absolute_import, unicode_literals
-
+from functools import total_ordering
 import logging
 import re
 from decimal import Decimal
@@ -9,7 +9,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F, ObjectDoesNotExist, Sum
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _, ugettext
 
 import plata
@@ -26,7 +25,6 @@ except ImportError:
 logger = logging.getLogger("plata.shop.order")
 
 
-@python_2_unicode_compatible
 class TaxClass(models.Model):
     """
     Tax class, storing a tax rate
@@ -119,7 +117,6 @@ class BillingShippingAddress(models.Model):
         return ["%s%s" % (prefix, f) for f in cls.ADDRESS_FIELDS]
 
 
-@python_2_unicode_compatible
 class Order(models.Model):
     """The main order model. Used for carts and orders alike."""
 
@@ -568,7 +565,6 @@ def validate_order_currencies(order):
 Order.register_validator(validate_order_currencies, Order.VALIDATE_BASE)
 
 
-@python_2_unicode_compatible
 class OrderItem(models.Model):
     """Single order line item"""
 
@@ -685,7 +681,6 @@ class OrderItem(models.Model):
             return self.discounted_subtotal_excl_tax
 
 
-@python_2_unicode_compatible
 class OrderStatus(models.Model):
     """
     Order status
@@ -733,7 +728,6 @@ class OrderPaymentManager(models.Manager):
         return self.filter(authorized__isnull=False)
 
 
-@python_2_unicode_compatible
 class OrderPayment(models.Model):
     """
     Order payment
@@ -858,7 +852,7 @@ class OrderPayment(models.Model):
     delete.alters_data = True
 
 
-@python_2_unicode_compatible
+@total_ordering
 class PriceBase(models.Model):
     """
     Price for a given product, currency, tax class and time period
@@ -897,8 +891,11 @@ class PriceBase(models.Model):
             "value": self._unit_price,
         }
 
-    def __cmp__(self, other):
-        return int((self.unit_price_excl_tax - other.unit_price_excl_tax) * 100)
+    def __lt__(self, other):
+        return self.unit_price_excl_tax < other.unit_price_excl_tax
+
+    def __eq__(self, other):
+        return self.unit_price_excl_tax == other.unit_price_excl_tax
 
     def __hash__(self):
         return int(self.unit_price_excl_tax * 100)
