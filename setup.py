@@ -23,12 +23,13 @@ setup(
     install_requires=[
         "Django > 1.8",
         "simplejson>=3.8",
-        "openpyxl>=2.2",
-        "reportlab>=3.2",
-        "pdfdocument>=3.1",
-        "xlsxdocument",
         "django-countries>=3.3",
         "pytz",
+        # make extras?
+        #"openpyxl>=2.2",
+        #"reportlab>=3.2",
+        #"pdfdocument>=3.1",
+        #"xlsxdocument",
     ],
     extras_require={
         "billogram": ["billogram_api"],
@@ -43,7 +44,6 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
         "Topic :: Software Development",

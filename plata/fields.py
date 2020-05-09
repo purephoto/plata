@@ -3,13 +3,13 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 import logging
 import re
+from functools import partial
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import six
+import six
 from django.utils.dateparse import parse_date, parse_datetime, parse_time
-from django.utils.functional import curry
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -24,7 +24,7 @@ except TypeError:  # pragma: no cover
 
 
 #: Field offering all defined currencies
-CurrencyField = curry(
+CurrencyField = partial(
     models.CharField,
     _("currency"),
     max_length=3,
@@ -160,7 +160,7 @@ class JSONField(models.TextField):
             use_decimal=True,
         )
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection):
         """
          Convert the input JSON value into python structures, raises
          django.core.exceptions.ValidationError if the data can't be converted.
