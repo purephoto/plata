@@ -28,6 +28,12 @@ class BaseCheckoutForm(forms.ModelForm):
         super(BaseCheckoutForm, self).__init__(*args, **kwargs)
 
     def clean(self):
+        try:  # pragma: no cover
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+        except ImportError:
+            from django.contrib.auth.models import User
+
         data = super(BaseCheckoutForm, self).clean()
 
         if data.get("email"):
@@ -58,6 +64,12 @@ class BaseCheckoutForm(forms.ModelForm):
         return data
 
     def save(self):
+        try:  # pragma: no cover
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+        except ImportError:
+            from django.contrib.auth.models import User
+            
         """
         Save the order, create or update the contact information
         (if available) and return the saved order instance
