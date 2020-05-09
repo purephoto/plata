@@ -120,7 +120,7 @@ class BillingShippingAddress(models.Model):
 
 
 @python_2_unicode_compatible
-class Order(BillingShippingAddress):
+class Order(models.Model):
     """The main order model. Used for carts and orders alike."""
 
     #: Order object is a cart.
@@ -156,6 +156,8 @@ class Order(BillingShippingAddress):
         related_name="orders",
         on_delete=models.SET_NULL,
     )
+    contact = models.ForeignKey(plata.settings.PLATA_CONTACT_MODEL, blank=True, null=True, related_name="orders",
+                                on_delete=models.PROTECT)
     language_code = models.CharField(
         _("language"), max_length=10, default="", blank=True
     )
@@ -164,7 +166,6 @@ class Order(BillingShippingAddress):
     )
 
     _order_id = models.CharField(_("order ID"), max_length=20, blank=True)
-    email = models.EmailField(_("e-mail address"))
 
     currency = CurrencyField()
     price_includes_tax = models.BooleanField(
@@ -191,6 +192,7 @@ class Order(BillingShippingAddress):
     shipping_tax = models.DecimalField(
         _("shipping tax"), max_digits=18, decimal_places=2, default=Decimal("0.00")
     )
+    shipping_tracking_number = models.CharField(max_length=100, blank=True)
 
     total = models.DecimalField(
         _("total"), max_digits=18, decimal_places=2, default=Decimal("0.00")
@@ -217,6 +219,9 @@ class Order(BillingShippingAddress):
         verbose_name = _("order")
         verbose_name_plural = _("orders")
         get_latest_by = "created"
+        indexes = [
+            models.Index(fields=['user', 'status']),
+        ]
 
     def __str__(self):
         return self.order_id
