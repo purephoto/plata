@@ -895,6 +895,8 @@ class PriceBase(models.Model):
         return self.unit_price_excl_tax < other.unit_price_excl_tax
 
     def __eq__(self, other):
+        if not isinstance(other, PriceBase):
+            return False
         return self.unit_price_excl_tax == other.unit_price_excl_tax
 
     def __hash__(self):
