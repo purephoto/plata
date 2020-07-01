@@ -155,6 +155,8 @@ class Order(models.Model):
     )
     contact = models.ForeignKey(plata.settings.PLATA_CONTACT_MODEL, blank=True, null=True, related_name="orders",
                                 on_delete=models.PROTECT)
+    seller = models.ForeignKey(plata.settings.PLATA_SELLER_MODEL, blank=True, null=True, related_name='+',
+                                on_delete=models.PROTECT)
     language_code = models.CharField(
         _("language"), max_length=10, default="", blank=True
     )
