@@ -245,12 +245,12 @@ RANDOM_CODE_CHARACTERS = "23456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVW
 
 
 def generate_random_code():
-    return "".join(random.sample(RANDOM_CODE_CHARACTERS, 10))
+    return "".join(random.sample(RANDOM_CODE_CHARACTERS, 16))
 
 
 class Discount(DiscountBase):
     code = models.CharField(
-        _("code"), max_length=30, unique=True, default=generate_random_code
+        _("code"), max_length=50, unique=True, default=generate_random_code
     )
 
     is_active = models.BooleanField(_("is active"), default=True)
