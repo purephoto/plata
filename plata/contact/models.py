@@ -31,6 +31,7 @@ class Contact(BillingShippingAddress):
     )
 
     dob = models.DateField(_("date of birth"), blank=True, null=True)
+    phone = models.CharField(_("phone"), max_length=100, blank=True)
     created = models.DateTimeField(_("created"), default=timezone.now)
 
     currency = CurrencyField(help_text=_("Preferred currency."))
@@ -50,6 +51,7 @@ class Contact(BillingShippingAddress):
         """
 
         self.currency = order.currency
+        self.phone = order.phone
         self.shipping_same_as_billing = order.shipping_same_as_billing
 
         for field in self.ADDRESS_FIELDS:
