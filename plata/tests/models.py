@@ -392,7 +392,7 @@ class ModelTest(PlataTest):
 
         try:
             d.validate(order)
-        except ValidationError, e:
+        except ValidationError as e:
             self.assertEqual(len(e.messages), 2)
 
         d.is_active = True
@@ -400,7 +400,7 @@ class ModelTest(PlataTest):
 
         try:
             d.validate(order)
-        except ValidationError, e:
+        except ValidationError as e:
             self.assertEqual(len(e.messages), 2)
 
     def test_11_multiple_discounts(self):
