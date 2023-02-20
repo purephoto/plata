@@ -277,11 +277,6 @@ def validate_order_stock_available(order):
 
 if plata.settings.PLATA_STOCK_TRACKING:
     product_model = plata.product_model()
-    try:
-        product_model._meta.get_field('items_in_stock')
-    except models.FieldDoesNotExist:
-        raise ImproperlyConfigured(
-            'Product model %r must have a field named `items_in_stock`' % product_model)
 
     signals.post_delete.connect(update_items_in_stock, sender=StockTransaction)
     signals.post_save.connect(update_items_in_stock, sender=StockTransaction)
