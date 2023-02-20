@@ -65,7 +65,7 @@ A real-world example follows::
 from __future__ import with_statement
 
 import contextlib
-import StringIO
+from io import StringIO
 
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
