@@ -35,7 +35,7 @@ class TaxClass(models.Model):
         verbose_name = _('tax class')
         verbose_name_plural = _('tax classes')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -156,7 +156,7 @@ class Order(BillingShippingAddress):
         verbose_name = _('order')
         verbose_name_plural = _('orders')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.order_id
 
     def save(self, *args, **kwargs):
@@ -459,7 +459,7 @@ class OrderItem(models.Model):
         verbose_name = _('order item')
         verbose_name_plural = _('order items')
 
-    def __unicode__(self):
+    def __str__(self):
         return u'%s of %s' % (self.quantity, self.product)
 
     @property
@@ -521,7 +521,7 @@ class OrderStatus(models.Model):
         verbose_name = _('order status')
         verbose_name_plural = _('order statuses')
 
-    def __unicode__(self):
+    def __str__(self):
         return u'Status %s for %s' % (self.get_status_display(), self.order)
 
     def save(self, *args, **kwargs):
@@ -592,7 +592,7 @@ class OrderPayment(models.Model):
 
     objects = OrderPaymentManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return u'%s of %s %.2f for %s' % (
             self.authorized and u'Authorized' or u'Not authorized',
             self.currency,
@@ -646,7 +646,7 @@ class PriceBase(models.Model):
         default=plata.settings.PLATA_PRICE_INCLUDES_TAX)
     tax_class = models.ForeignKey(TaxClass, verbose_name=_('tax class'))
 
-    def __unicode__(self):
+    def __str__(self):
         return u'%s %.2f' % (self.currency, self.unit_price)
 
     def handle_order_item(self, item):

@@ -65,7 +65,7 @@ class Period(models.Model):
 
     objects = PeriodManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -245,8 +245,8 @@ class StockTransaction(models.Model):
 
     objects = StockTransactionManager()
 
-    def __unicode__(self):
-        return u'%s %s of %s' % (
+    def __str__(self):
+        return '%s %s of %s' % (
             self.change,
             self.get_type_display(),
             self.product)
