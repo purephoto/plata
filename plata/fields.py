@@ -4,6 +4,7 @@ import simplejson as json
 from django import forms
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils import six
 from django.utils.functional import curry
 from django.utils.translation import ugettext_lazy as _
 
@@ -52,7 +53,7 @@ class JSONField(models.TextField):
 
         if isinstance(value, dict):
             return value
-        elif isinstance(value, basestring):
+        elif isinstance(value, six.string_types):
             # Avoid asking the JSON decoder to handle empty values:
             if not value:
                 return {}
@@ -89,7 +90,7 @@ class JSONField(models.TextField):
         if isinstance(value, dict):
             value = json.dumps(value, cls=DjangoJSONEncoder, use_decimal=True)
 
-        assert isinstance(value, basestring)
+        assert isinstance(value, six.string_types)
 
         return value
 
